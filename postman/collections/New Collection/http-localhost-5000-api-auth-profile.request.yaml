@@ -1,0 +1,8 @@
+$kind: http-request
+name: http://localhost:5000/api/auth/profile
+description: ""
+url: http://localhost:5000/api/auth/profile
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+order: 1498853000431199

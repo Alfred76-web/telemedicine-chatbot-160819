@@ -1,0 +1,6 @@
+$kind: http-request
+name: http://localhost:5000/api/admin/test
+description: ""
+url: http://localhost:5000/api/admin/test
+method: GET
+order: 1791885698738

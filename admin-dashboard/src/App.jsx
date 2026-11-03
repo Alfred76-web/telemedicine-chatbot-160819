@@ -7,6 +7,7 @@ import OverviewPage from './pages/OverviewPage';
 import UsersPage from './pages/UsersPage';
 import ConsultationsPage from './pages/ConsultationsPage';
 import ConsultationDetailPage from './pages/ConsultationDetailPage';
+import AuditLogPage from './pages/AuditLogPage';
 
 export default function App() {
   return (
@@ -18,7 +19,7 @@ export default function App() {
           <Route path="/consultations" element={<ConsultationsPage />} />
           <Route path="/consultations/:id" element={<ConsultationDetailPage />} />
           <Route path="/users" element={<UsersPage />} />
-          <Route path="/logs" element={<Placeholder title="Audit log" />} />
+          <Route path="/logs" element={<AuditLogPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

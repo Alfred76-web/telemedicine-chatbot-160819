@@ -1,0 +1,6 @@
+$kind: http-request
+url: http://localhost:5000/api/admin/consultations/export?triage=clinic
+method: GET
+queryParams:
+  triage: clinic
+order: 12000

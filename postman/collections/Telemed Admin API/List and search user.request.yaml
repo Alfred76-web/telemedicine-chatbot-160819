@@ -1,0 +1,6 @@
+$kind: http-request
+url: http://localhost:5000/api/admin/users?search=alfred
+method: GET
+queryParams:
+  search: alfred
+order: 4000

@@ -1,0 +1,4 @@
+$kind: http-request
+url: http://localhost:5000/api/admin/consultations
+method: GET
+order: 5000

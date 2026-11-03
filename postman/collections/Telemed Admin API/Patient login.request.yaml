@@ -1,0 +1,11 @@
+$kind: http-request
+url: http://localhost:5000/api/auth/login
+method: POST
+body:
+  type: json
+  content: '  { "email": "alfred@test.com", "password": "password123" }'
+scripts:
+  - type: afterResponse
+    code: '  pm.collectionVariables.set("patientToken", pm.response.json().token);'
+    language: text/javascript
+order: 2000

@@ -10,3 +10,4 @@ backend/node_modules/
 
 # Local test scripts
 backend/test-gemini.js
+*.csv

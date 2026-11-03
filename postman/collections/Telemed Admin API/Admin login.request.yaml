@@ -1,0 +1,11 @@
+$kind: http-request
+url: http://localhost:5000/api/auth/login
+method: POST
+body:
+  type: json
+  content: '  { "email": "admin@telemed.com", "password": "Admin@2026" }'
+scripts:
+  - type: afterResponse
+    code: '  pm.collectionVariables.set("adminToken", pm.response.json().token);'
+    language: text/javascript
+order: 1000

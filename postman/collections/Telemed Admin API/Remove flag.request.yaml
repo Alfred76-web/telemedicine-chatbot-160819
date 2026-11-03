@@ -1,0 +1,4 @@
+$kind: http-request
+url: http://localhost:5000/api/admin/consultations/cecb77b9-64a8-49aa-b8bf-e0c9ec960489/flag
+method: DELETE
+order: 9000

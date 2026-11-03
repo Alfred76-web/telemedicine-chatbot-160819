@@ -1,0 +1,9 @@
+$kind: http-request
+url: http://localhost:5000/api/admin/consultations?/flaged=true
+method: GET
+queryParams:
+  /flaged: "true"
+body:
+  type: json
+  content: "  {  }"
+order: 7000

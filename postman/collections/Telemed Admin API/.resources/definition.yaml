@@ -1,0 +1,17 @@
+$kind: collection
+variables:
+  - key: adminToken
+    secret: true
+    disabled: false
+  - key: patient Token
+    value: ""
+    disabled: false
+  - key: patientToken
+    secret: true
+    disabled: false
+auth:
+  - id: f4eb4710-fd51-42a3-a5d1-e657d734d05b
+    type: bearer
+    name: Bearer Token
+    credentials:
+      token: "{{adminToken}}"

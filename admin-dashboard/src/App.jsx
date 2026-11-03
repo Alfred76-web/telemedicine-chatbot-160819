@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage';
 import Placeholder from './pages/Placeholder';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import OverviewPage from './pages/OverviewPage';
 
 export default function App() {
   return (
@@ -10,7 +11,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Placeholder title="Overview" />} />
+          <Route path="/" element={<OverviewPage />} />
           <Route path="/consultations" element={<Placeholder title="Consultations" />} />
           <Route path="/users" element={<Placeholder title="Users" />} />
           <Route path="/logs" element={<Placeholder title="Audit log" />} />

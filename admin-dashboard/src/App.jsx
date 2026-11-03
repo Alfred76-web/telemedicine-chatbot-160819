@@ -4,6 +4,7 @@ import Placeholder from './pages/Placeholder';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import OverviewPage from './pages/OverviewPage';
+import UsersPage from './pages/UsersPage';
 
 export default function App() {
   return (
@@ -13,7 +14,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<OverviewPage />} />
           <Route path="/consultations" element={<Placeholder title="Consultations" />} />
-          <Route path="/users" element={<Placeholder title="Users" />} />
+          <Route path="/users" element={<UsersPage />} />
           <Route path="/logs" element={<Placeholder title="Audit log" />} />
         </Route>
       </Route>

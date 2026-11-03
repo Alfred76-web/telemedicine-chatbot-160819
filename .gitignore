@@ -11,3 +11,10 @@ backend/node_modules/
 # Local test scripts
 backend/test-gemini.js
 *.csv
+# Python / ML
+ml/.venv/
+ml/data/raw/
+.ipynb_checkpoints/
+__pycache__/
+ml/models/
+ml/outputs/

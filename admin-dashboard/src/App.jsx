@@ -5,6 +5,8 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import OverviewPage from './pages/OverviewPage';
 import UsersPage from './pages/UsersPage';
+import ConsultationsPage from './pages/ConsultationsPage';
+import ConsultationDetailPage from './pages/ConsultationDetailPage';
 
 export default function App() {
   return (
@@ -13,7 +15,8 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<OverviewPage />} />
-          <Route path="/consultations" element={<Placeholder title="Consultations" />} />
+          <Route path="/consultations" element={<ConsultationsPage />} />
+          <Route path="/consultations/:id" element={<ConsultationDetailPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/logs" element={<Placeholder title="Audit log" />} />
         </Route>

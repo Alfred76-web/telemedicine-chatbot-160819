@@ -1,0 +1,27 @@
+{
+  "model_name": "Logistic Regression",
+  "version": "20261104-0627",
+  "labels": [
+    "self-care",
+    "pharmacy",
+    "clinic",
+    "emergency"
+  ],
+  "emergency_threshold": 0.1,
+  "trained_on": 1458,
+  "sklearn_version": "1.9.1",
+  "test_metrics": {
+    "accuracy": 0.8459,
+    "precision (macro)": 0.7587,
+    "recall (macro)": 0.7949,
+    "F1 (macro)": 0.7416,
+    "F1 (weighted)": 0.8571,
+    "emergency recall": 0.95,
+    "emergency precision": 0.3958
+  },
+  "best_params": {
+    "clf__C": "10",
+    "features__words__ngram_range": "(1, 1)"
+  },
+  "test_examples": 292
+}

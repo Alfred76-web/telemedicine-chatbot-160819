@@ -4,6 +4,7 @@ const axios = require('axios');
 const pool = require('../config/db');
 const { verifyToken } = require('../middleware/auth');
 const { sendConsultationSMS } = require('../services/smsService');
+const { getMlTriage, combineTriage, escalationNote } = require('../services/mlTriageService');
 require('dotenv').config();
 
 // ── GEMINI MODELS (main first, backups after) — set in .env ───────────────
@@ -72,9 +73,11 @@ function detectLanguage(text, fallback = 'en') {
 }
 
 // ── EXTRACT TRIAGE FROM RESPONSE ──────────────────────────────────────────
+// Returns null when Gemini gives no TRIAGE line, so the hybrid logic can
+// fall back to the ML model (and flag it) instead of silently using 'clinic'.
 function extractTriage(responseText) {
   const match = responseText.match(/TRIAGE:\s*(self-care|pharmacy|clinic|emergency)/i);
-  return match ? match[1].toLowerCase() : 'clinic';
+  return match ? match[1].toLowerCase() : null;
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
@@ -129,6 +132,10 @@ router.post('/start', verifyToken, async (req, res) => {
       : (req.user.language || 'en');
     const detectedLanguage = detectLanguage(symptoms, fallbackLanguage);
     const languageName = detectedLanguage === 'sw' ? 'Kiswahili' : 'English';
+
+    // 1b. Ask the ML triage model now, so it runs at the same time as Gemini.
+    //     getMlTriage never throws: it resolves to null if the ML service is down.
+    const mlPromise = getMlTriage(symptoms);
 
     // 2. Create consultation record
     const consultation = await pool.query(
@@ -203,13 +210,27 @@ router.post('/start', verifyToken, async (req, res) => {
       throw new Error('Gemini returned an empty response');
     }
 
-    const triageOutcome = extractTriage(aiText);
-    const cleanText = aiText
+    const geminiTriage = extractTriage(aiText);
+    let cleanText = aiText
       .replace(/^\s*TRIAGE:.*$/im, '')
       .replace(/\*\*/g, '')
       .replace(/^#+\s*/gm, '')
       .replace(/^\s*\*\s+/gm, '- ')
       .trim();
+
+    // 7b. Hybrid triage: combine Gemini with the ML model (the safer level wins)
+    const ml = await mlPromise;
+    const hybrid = combineTriage(geminiTriage, ml);
+    const triageOutcome = hybrid.finalTriage;
+
+    if (hybrid.escalatedByMl) {
+      cleanText += `\n\n${escalationNote(triageOutcome, detectedLanguage)}`;
+    }
+
+    console.log(
+      `Triage #${consultationId}: Gemini=${geminiTriage || '-'} ML=${ml ? `${ml.triage} (${Math.round(ml.confidence * 100)}%)` : 'unavailable'}` +
+      ` -> final=${triageOutcome} [${hybrid.agreement}]${hybrid.flag ? ' FLAGGED' : ''}`
+    );
 
     // 8. Save bot message
     await pool.query(
@@ -218,12 +239,32 @@ router.post('/start', verifyToken, async (req, res) => {
       [consultationId, cleanText]
     );
 
-    // 9. Close consultation and save health record
+    // 9. Close consultation (with both triage opinions; auto-flag if needed) and save health record
     await pool.query(
       `UPDATE consultations
-       SET status = 'completed', triage_outcome = $1, ended_at = NOW()
-       WHERE id = $2`,
-      [triageOutcome, consultationId]
+       SET status = 'completed',
+           triage_outcome = $1,
+           ended_at = NOW(),
+           gemini_triage = $2,
+           ml_triage = $3,
+           ml_confidence = $4,
+           triage_agreement = $5,
+           ml_model_version = $6,
+           flagged     = CASE WHEN $7::boolean THEN TRUE  ELSE flagged     END,
+           flag_reason = CASE WHEN $7::boolean THEN $8::text ELSE flag_reason END,
+           flagged_at  = CASE WHEN $7::boolean THEN NOW() ELSE flagged_at  END
+       WHERE id = $9`,
+      [
+        triageOutcome,
+        hybrid.geminiTriage,
+        hybrid.mlTriage,
+        hybrid.mlConfidence,
+        hybrid.agreement,
+        hybrid.mlVersion,
+        hybrid.flag,
+        hybrid.flagReason,
+        consultationId,
+      ]
     );
 
     await pool.query(
@@ -256,7 +297,15 @@ router.post('/start', verifyToken, async (req, res) => {
       language: detectedLanguage,
       triage: triageOutcome,
       response: cleanText,
-      smsSent: smsResult.sent
+      smsSent: smsResult.sent,
+      ml: {
+        geminiTriage: hybrid.geminiTriage,
+        mlTriage: hybrid.mlTriage,
+        mlConfidence: hybrid.mlConfidence,
+        agreement: hybrid.agreement,
+        escalated: hybrid.escalatedByMl,
+        flagged: hybrid.flag,
+      }
     });
 
   } catch (err) {

@@ -1,0 +1,11 @@
+# Runtime dependencies for the ML service (app.py)
+fastapi
+uvicorn
+scikit-learn
+joblib
+pandas
+numpy
+# Notebooks only
+jupyterlab
+matplotlib
+seaborn

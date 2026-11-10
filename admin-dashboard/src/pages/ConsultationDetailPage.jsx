@@ -6,6 +6,7 @@ import {
 import api, { errorMessage } from '../api';
 import TriageBadge from '../components/TriageBadge';
 import FlagDialog from '../components/FlagDialog';
+import HybridTriageCard from '../components/HybridTriageCard';
 import { LANGUAGE_LABELS, formatDateTime } from '../utils/triage';
 
 const isPatient = (m) => ['patient', 'user'].includes((m.sender || m.sender_type || m.role || '').toLowerCase());
@@ -26,6 +27,7 @@ export default function ConsultationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [flagOpen, setFlagOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -34,6 +36,7 @@ export default function ConsultationDetailPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+    setRefreshKey((k) => k + 1);
     try {
       const res = await api.get(`/admin/consultations/${id}`);
       setData(res.data);
@@ -98,6 +101,7 @@ export default function ConsultationDetailPage() {
   const c = data.consultation || data;
   const messages = data.messages || [];
   const notifications = data.notifications || [];
+  const autoFlag = (c.flag_reason || '').startsWith('Auto-flag');
 
   return (
     <div className="page">
@@ -127,7 +131,7 @@ export default function ConsultationDetailPage() {
         <div className="flag-banner">
           <Flag size={18} />
           <div>
-            <strong>Flagged for clinical review</strong>
+            <strong>{autoFlag ? 'Automatically flagged by the hybrid triage check' : 'Flagged for clinical review'}</strong>
             <div>{c.flag_reason || 'No reason given'}</div>
             {c.flagged_at && <div className="cell-sub">Flagged {formatDateTime(c.flagged_at)}</div>}
           </div>
@@ -171,6 +175,8 @@ export default function ConsultationDetailPage() {
               <div><dt>Status</dt><dd className="capitalize">{c.status || '—'}</dd></div>
             </dl>
           </div>
+
+          <HybridTriageCard id={id} refreshKey={refreshKey} />
 
           <div className="card">
             <h3 className="card-title">Patient</h3>

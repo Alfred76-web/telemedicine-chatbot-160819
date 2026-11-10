@@ -10,6 +10,7 @@ import {
 import api, { errorMessage } from '../api';
 import StatCard from '../components/StatCard';
 import TriageBadge from '../components/TriageBadge';
+import HybridTriagePanel from '../components/HybridTriagePanel';
 import { TRIAGE, LANGUAGE_LABELS, formatDateTime } from '../utils/triage';
 
 const LANGUAGE_COLORS = { en: '#00796b', sw: '#01579b' };
@@ -34,10 +35,12 @@ export default function OverviewPage() {
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+    setRefreshKey((k) => k + 1);
     try {
       const [statsRes, recentRes] = await Promise.all([
         api.get('/admin/stats'),
@@ -113,6 +116,9 @@ export default function OverviewPage() {
         <StatCard icon={Flag} label="Flagged for review" value={totals.flagged} color="#ef6c00" />
         <StatCard icon={MessageSquareText} label="SMS summaries sent" value={totals.sms_sent} color="#2e7d32" />
       </div>
+
+      {/* ── Hybrid triage (Gemini vs ML) ── */}
+      <HybridTriagePanel refreshKey={refreshKey} />
 
       {/* ── Charts + recent ── */}
       <div className="charts-grid">

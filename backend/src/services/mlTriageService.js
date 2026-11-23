@@ -16,6 +16,12 @@ const ML_TIMEOUT_MS = Number(process.env.ML_TIMEOUT_MS || 4000);
 // or trigger a flag (an ML "emergency" always counts, for safety).
 const ML_MIN_CONFIDENCE = Number(process.env.ML_MIN_CONFIDENCE || 0.5);
 
+// Languages in which the ML model may RAISE Gemini's level. Test-set accuracy was
+// 88.8% for English but only 34.8% for Kiswahili (23 examples), so for Kiswahili the
+// ML opinion is advisory: it is recorded and can flag a case, but never escalates.
+const ML_ESCALATE_LANGUAGES = (process.env.ML_ESCALATE_LANGUAGES || 'en')
+  .split(',').map((l) => l.trim().toLowerCase()).filter(Boolean);
+
 const SEVERITY = { 'self-care': 0, pharmacy: 1, clinic: 2, emergency: 3 };
 const isLevel = (t) => Object.prototype.hasOwnProperty.call(SEVERITY, t);
 
@@ -44,10 +50,11 @@ async function getMlTriage(text) {
 /**
  * @param {string|null} geminiTriage  level parsed from Gemini's TRIAGE line
  * @param {object|null} ml            result of getMlTriage()
+ * @param {string}      language      detected consultation language ('en' | 'sw')
  * @returns {{finalTriage, geminiTriage, mlTriage, mlConfidence, mlVersion,
  *            agreement, escalatedByMl, flag, flagReason}}
  */
-function combineTriage(geminiTriage, ml) {
+function combineTriage(geminiTriage, ml, language = 'en') {
   const gemini = isLevel(geminiTriage) ? geminiTriage : null;
 
   const base = {
@@ -83,7 +90,8 @@ function combineTriage(geminiTriage, ml) {
   // They disagree
   const mlTrusted = ml.triage === 'emergency' || ml.confidence >= ML_MIN_CONFIDENCE;
   const mlMoreUrgent = SEVERITY[ml.triage] > SEVERITY[gemini];
-  const escalate = mlMoreUrgent && mlTrusted;
+  const mlCanEscalate = ML_ESCALATE_LANGUAGES.includes(String(language).toLowerCase());
+  const escalate = mlMoreUrgent && mlTrusted && mlCanEscalate;
   const involvesEmergency = gemini === 'emergency' || ml.triage === 'emergency';
   // Low-confidence, non-emergency disagreements are recorded but not flagged
   const flag = mlTrusted || involvesEmergency;
@@ -96,7 +104,11 @@ function combineTriage(geminiTriage, ml) {
     flag,
     flagReason: flag
       ? `Auto-flag: AI/ML disagreement. Gemini: ${gemini}, ML model: ${ml.triage} (${pct(ml.confidence)}). ` +
-        (escalate ? `Escalated to ${ml.triage} for safety.` : `Kept ${gemini}.`)
+        (escalate
+          ? `Escalated to ${ml.triage} for safety.`
+          : mlMoreUrgent && mlTrusted && !mlCanEscalate
+            ? `Kept ${gemini} (ML is advisory only for this language).`
+            : `Kept ${gemini}.`)
       : null,
   };
 }

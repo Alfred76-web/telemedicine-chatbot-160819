@@ -250,7 +250,7 @@ router.post('/start', verifyToken, async (req, res) => {
 
     // 7b. Hybrid triage: combine Gemini with the ML model (the safer level wins)
     const ml = await mlPromise;
-    const hybrid = combineTriage(geminiTriage, ml);
+    const hybrid = combineTriage(geminiTriage, ml, detectedLanguage);
     const triageOutcome = hybrid.finalTriage;
 
     if (hybrid.escalatedByMl) {
